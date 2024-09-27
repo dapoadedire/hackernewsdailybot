@@ -40,17 +40,6 @@ jobs:
           # Create app directory if it doesn't exist
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "mkdir -p /home/$EC2_USER/apps/hackernewsdaily"
 
-          # Stop the service
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "sudo systemctl stop hackernewsdailybot"
-
-          # Wait until the service is confirmed to be stopped
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST '
-            while systemctl is-active --quiet hackernewsdailybot; do
-              echo "Waiting for hackernewsdailybot to stop..."
-              sleep 2
-            done
-            echo "Service hackernewsdailybot has stopped."
-          '
 
           # Copy the main binary
           scp -o StrictHostKeyChecking=no -i private_key.pem main $EC2_USER@$EC2_HOST:/home/$EC2_USER/apps/hackernewsdaily/main
@@ -69,8 +58,6 @@ jobs:
           # Set permissions for the app directory
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "sudo chown -R $EC2_USER:$EC2_USER /home/$EC2_USER/apps/hackernewsdaily && sudo chmod -R 755 /home/$EC2_USER/apps/hackernewsdaily"
 
-          # Restart cron jobs
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "sudo systemctl restart cron"
 
           # Clean up
           rm private_key.pem
