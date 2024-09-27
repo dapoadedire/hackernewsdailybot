@@ -70,7 +70,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "sudo chown -R $EC2_USER:$EC2_USER /home/$EC2_USER/apps/hackernewsdaily && sudo chmod -R 755 /home/$EC2_USER/apps/hackernewsdaily"
 
           # Restart cron jobs
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "sudo systemctl reload cron"
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "sudo systemctl restart cron"
 
           # Clean up
           rm private_key.pem
