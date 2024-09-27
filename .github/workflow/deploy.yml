@@ -1,0 +1,79 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.23
+
+      - name: Build the app
+        run: go build -o main .
+
+      - name: Deploy to EC2
+        env:
+          EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+
+        run: |
+          echo "$EC2_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+
+          # Create app directory if it doesn't exist
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "mkdir -p /home/$EC2_USER/apps/hackernewsdaily"
+
+          # Stop the service
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "sudo systemctl stop hackernewsdailybot"
+
+          # Wait until the service is confirmed to be stopped
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST '
+            while systemctl is-active --quiet hackernewsdailybot; do
+              echo "Waiting for hackernewsdailybot to stop..."
+              sleep 2
+            done
+            echo "Service hackernewsdailybot has stopped."
+          '
+
+          # Copy the main binary
+          scp -o StrictHostKeyChecking=no -i private_key.pem main $EC2_USER@$EC2_HOST:/home/$EC2_USER/apps/hackernewsdaily/main
+
+          # Create a .env file on the EC2 instance
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "
+            echo 'TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}' > /home/$EC2_USER/apps/hackernewsdaily/.env &&
+            echo 'DB_NAME=${DB_NAME}' >> /home/$EC2_USER/apps/hackernewsdaily/.env &&
+            echo 'DB_USER=${DB_USER}' >> /home/$EC2_USER/apps/hackernewsdaily/.env &&
+            echo 'DB_PASSWORD=${DB_PASSWORD}' >> /home/$EC2_USER/apps/hackernewsdaily/.env &&
+            echo 'DB_HOST=${DB_HOST}' >> /home/$EC2_USER/apps/hackernewsdaily/.env &&
+            echo 'DB_PORT=${DB_PORT}' >> /home/$EC2_USER/apps/hackernewsdaily/.env &&
+            sudo chmod 600 /home/$EC2_USER/apps/hackernewsdaily/.env
+          "
+
+          # Restart the service
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "sudo systemctl restart hackernewsdailybot"
+
+          # Set permissions for the app directory
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "sudo chown -R $EC2_USER:$EC2_USER /home/$EC2_USER/apps/hackernewsdaily && sudo chmod -R 755 /home/$EC2_USER/apps/hackernewsdaily"
+
+          # Reload cron jobs
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "sudo systemctl reload cron"
+
+          # Clean up
+          rm private_key.pem
