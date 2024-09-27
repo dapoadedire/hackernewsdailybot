@@ -66,9 +66,6 @@ jobs:
             sudo chmod 600 /home/$EC2_USER/apps/hackernewsdaily/.env
           "
 
-          # Restart the service
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "sudo systemctl restart hackernewsdailybot"
-
           # Set permissions for the app directory
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST "sudo chown -R $EC2_USER:$EC2_USER /home/$EC2_USER/apps/hackernewsdaily && sudo chmod -R 755 /home/$EC2_USER/apps/hackernewsdaily"
 
