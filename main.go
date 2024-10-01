@@ -57,7 +57,7 @@ func getArticles(url string, limit int) ([]Article, error) {
 		if title != "" && link != "" {
 			articles = append(articles, Article{
 				Title: title,
-				Link:  fmt.Sprintf("https://news.ycombinator.com/%s", link),
+				Link:  link,
 			})
 		}
 	})
@@ -71,8 +71,13 @@ func getArticles(url string, limit int) ([]Article, error) {
 		return nil, fmt.Errorf("no articles found")
 	}
 
+	fmt.Println(articles)
+
 	return articles, nil
 }
+
+
+
 
 func formatMessage(username string, categories []Category) string {
 	messageText := fmt.Sprintf("Good morning, %s!\n\nHere are the Hacker News articles that match your keywords for today:\n\n", username)
@@ -80,6 +85,9 @@ func formatMessage(username string, categories []Category) string {
 	for _, category := range categories {
 		messageText += fmt.Sprintf("%s\n", category.Name)
 		for i, article := range category.Articles {
+			if article.Link[:4] == "item" {
+				article.Link = fmt.Sprintf("https://news.ycombinator.com/%s", article.Link)
+			}
 			messageText += fmt.Sprintf("%d. [%s](%s)\n", i+1, article.Title, article.Link)
 		}
 		messageText += "\n"
