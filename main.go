@@ -71,7 +71,6 @@ func getArticles(url string, limit int) ([]Article, error) {
 		return nil, fmt.Errorf("no articles found")
 	}
 
-	fmt.Println(articles)
 
 	return articles, nil
 }
@@ -201,7 +200,12 @@ func fetchCategories() ([]Category, error) {
 
 	var results []Category
 	for _, cat := range categories {
-		articles, err := getArticles(cat.url, 5)
+		articleCount := 10
+		if cat.name == "Top News" {
+			articleCount = 5
+		}
+
+		articles, err := getArticles(cat.url, articleCount)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching %s articles: %w", cat.name, err)
 		}
@@ -210,7 +214,6 @@ func fetchCategories() ([]Category, error) {
 
 	return results, nil
 }
-
 func main() {
 	timeStart := time.Now()
 	database.InitDB()
