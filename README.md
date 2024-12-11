@@ -9,6 +9,7 @@ HackerNews Daily Bot is a Go application that scrapes the latest articles from H
 - Sends daily updates to multiple Telegram users.
 - Optimized with concurrency and error handling.
 
+
 ## Requirements
 
 - Go 1.20+
@@ -64,3 +65,6 @@ The bot automatically:
 ## Key Packages Used
 -  Colly: Web scraping.
 - Godotenv: Environment variable management.
+
+
+![4F442816-4107-4E41-A1AE-2E610D9C0232](https://github.com/user-attachments/assets/c2a92053-a50c-4aea-8b6c-a026d384c090)
